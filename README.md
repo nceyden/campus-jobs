@@ -6,6 +6,10 @@
 - frontend: HTML, Bootstrap 5, ванильный JS
 - тесты: pytest
 
+## Схема БД
+
+![схема бд](docs/db_schema.png)
+
 ## Запуск
 
 будет позже
