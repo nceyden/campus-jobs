@@ -1,12 +1,23 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database import Base, engine, SessionLocal
 from app import models, schemas
 
-# создаем таблицы при старте если их еще нет
 Base.metadata.create_all(bind=engine)
 
+app = FastAPI(title="campus-jobs")
+
+# cors - разрешаем запросы с любого origin
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app = FastAPI(title="campus-jobs")
 
 
@@ -17,11 +28,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-@app.get("/")
-def root():
-    return {"status": "ok"}
 
 
 @app.get("/vacancies", response_model=list[schemas.VacancyOut])
@@ -62,3 +68,27 @@ def get_my_applications(db: Session = Depends(get_db)):
     return db.query(models.Application).filter(
         models.Application.user_id == CURRENT_USER_ID
     ).all()
+
+
+# отдаем фронт, mount должен идти после всех api роутов чтобы они не перехватывались
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.get("/")
+def index():
+    return FileResponse("static/index.html")
+
+
+@app.get("/vacancy/{vacancy_id}")
+def vacancy_page(vacancy_id: int):
+    return FileResponse("static/vacancy.html")
+
+
+@app.get("/apply/{vacancy_id}")
+def apply_page(vacancy_id: int):
+    return FileResponse("static/apply.html")
+
+
+@app.get("/cabinet")
+def cabinet_page():
+    return FileResponse("static/cabinet.html")

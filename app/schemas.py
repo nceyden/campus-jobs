@@ -9,6 +9,7 @@ class VacancyOut(BaseModel):
     description: str | None = None
     salary: int | None = None
     is_active: bool
+    employer_name: str | None = None  # имя работодателя для карточки на фронте
 
     # говорим pydantic читать данные из атрибутов sqlalchemy объекта
     model_config = {"from_attributes": True}

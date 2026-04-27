@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск работы в кампусе</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-light bg-light border-bottom mb-4">
+    <div class="container">
+        <a class="navbar-home" href="/">Работа в кампусе</a>
+        <a class="btn btn-outline-secondary" href="/cabinet">Мои заявки</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1 class="mb-4">Вакансии</h1>
+
+    <input type="text" id="search" class="form-control mb-4" placeholder="поиск по названию">
+
+    <div id="vacancies-list">
+        <p class="text-muted">загрузка...</p>
+    </div>
+</div>
+
+<script>
+    // глобальный массив всех вакансий, чтобы фильтровать без новых запросов
+    let allVacancies = [];
+
+    async function loadVacancies() {
+        const response = await fetch('/vacancies');
+        allVacancies = await response.json();
+        renderVacancies(allVacancies);
+    }
+
+    function renderVacancies(vacancies) {
+        const list = document.getElementById('vacancies-list');
+
+        if (vacancies.length === 0) {
+            list.innerHTML = '<p class="text-muted">ничего не найдено</p>';
+            return;
+        }
+
+        list.innerHTML = vacancies.map(v => `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">${v.title}</h5>
+                    <p class="card-subtitle text-muted mb-2">${v.employer_name || ''}</p>
+                    <p class="card-text">${v.description || ''}</p>
+                    <p class="mb-2">
+                        ${v.salary ? `<strong>${v.salary} ₽</strong>` : '<span class="text-muted">без оплаты</span>'}
+                    </p>
+                    <a href="/vacancy/${v.id}" class="btn btn-primary">подробнее</a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        const filtered = allVacancies.filter(v => v.title.toLowerCase().includes(q));
+        renderVacancies(filtered);
+    });
+
+    loadVacancies();
+</script>
+
+</body>
+</html>
