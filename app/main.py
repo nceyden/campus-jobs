@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app.database import Base, engine, SessionLocal
+from app.database import Base, engine, get_db
 from app import models, schemas
 
 Base.metadata.create_all(bind=engine)
@@ -19,15 +19,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app = FastAPI(title="campus-jobs")
-
-
-# зависимость для эндпоинтов, дать сессию бд и закрыть после
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @app.get("/vacancies", response_model=list[schemas.VacancyOut])
