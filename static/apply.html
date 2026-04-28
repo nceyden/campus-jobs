@@ -1,1 +1,90 @@
-<h1>заявка</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отклик на вакансию</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-light bg-light border-bottom mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">Работа в кампусе</a>
+        <a class="btn btn-outline-secondary" href="/cabinet">Мои заявки</a>
+    </div>
+</nav>
+
+<div class="container">
+    <a href="javascript:history.back()" class="btn btn-link mb-3 ps-0">← назад</a>
+
+    <h1 class="mb-3">Отклик на вакансию</h1>
+    <p id="vacancy-title" class="text-muted mb-4">загрузка...</p>
+
+    <div id="message"></div>
+
+    <div id="form-block">
+        <div class="mb-3">
+            <label class="form-label">Сопроводительное письмо</label>
+            <textarea id="cover-letter" class="form-control" rows="6"
+                      placeholder="расскажите о себе и почему подходите..."></textarea>
+        </div>
+
+        <button id="submit-btn" class="btn btn-primary">отправить</button>
+    </div>
+</div>
+
+<script>
+    const vacancyId = window.location.pathname.split('/').pop();
+
+    // подгружаем название вакансии чтобы юзер видел куда подает
+    async function loadVacancyTitle() {
+        const response = await fetch(`/vacancies/${vacancyId}`);
+        if (response.status === 404) {
+            document.getElementById('vacancy-title').textContent = 'вакансия не найдена';
+            document.getElementById('form-block').style.display = 'none';
+            return;
+        }
+        const v = await response.json();
+        document.getElementById('vacancy-title').textContent = v.title;
+    }
+
+    async function submitApplication() {
+        const coverLetter = document.getElementById('cover-letter').value.trim();
+        const messageBox = document.getElementById('message');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // блокируем кнопку чтобы не отправили дважды
+        submitBtn.disabled = true;
+
+        const response = await fetch('/applications', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                vacancy_id: parseInt(vacancyId),
+                cover_letter: coverLetter || null,
+            }),
+        });
+
+        if (response.status === 201) {
+            messageBox.innerHTML = '<div class="alert alert-success">заявка отправлена, перенаправляем в кабинет...</div>';
+            document.getElementById('form-block').style.display = 'none';
+            // редирект через 1.5 сек чтобы юзер успел прочитать
+            setTimeout(() => window.location.href = '/cabinet', 1500);
+        } else if (response.status === 400) {
+            const err = await response.json();
+            messageBox.innerHTML = `<div class="alert alert-warning">${err.detail}</div>`;
+            submitBtn.disabled = false;
+        } else {
+            messageBox.innerHTML = '<div class="alert alert-danger">что-то пошло не так, попробуйте позже</div>';
+            submitBtn.disabled = false;
+        }
+    }
+
+    document.getElementById('submit-btn').addEventListener('click', submitApplication);
+
+    loadVacancyTitle();
+</script>
+
+</body>
+</html>

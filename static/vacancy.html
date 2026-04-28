@@ -1,1 +1,65 @@
-<h1>вакансия</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вакансия</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-light bg-light border-bottom mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">Работа в кампусе</a>
+        <a class="btn btn-outline-secondary" href="/cabinet">Мои заявки</a>
+    </div>
+</nav>
+
+<div class="container">
+    <a href="/" class="btn btn-link mb-3 ps-0">← к списку</a>
+
+    <div id="vacancy-content">
+        <p class="text-muted">загрузка...</p>
+    </div>
+</div>
+
+<script>
+    // достаем id из адреса
+    const vacancyId = window.location.pathname.split('/').pop();
+
+    async function loadVacancy() {
+        const response = await fetch(`/vacancies/${vacancyId}`);
+
+        if (response.status === 404) {
+            document.getElementById('vacancy-content').innerHTML =
+                '<div class="alert alert-warning">вакансия не найдена</div>';
+            return;
+        }
+
+        const v = await response.json();
+        renderVacancy(v);
+    }
+
+    function renderVacancy(v) {
+        document.getElementById('vacancy-content').innerHTML = `
+            <h1 class="mb-2">${v.title}</h1>
+            <p class="text-muted mb-3">${v.employer_name || ''}</p>
+
+            <div class="mb-4">
+                ${v.salary
+                    ? `<span class="badge bg-success fs-6">${v.salary} ₽</span>`
+                    : '<span class="badge bg-secondary fs-6">без оплаты</span>'}
+            </div>
+
+            <h5>Описание</h5>
+            <p>${v.description || 'описание не указано'}</p>
+
+            <a href="/apply/${v.id}" class="btn btn-primary mt-3">откликнуться</a>
+        `;
+    }
+
+    loadVacancy();
+</script>
+
+</body>
+</html>

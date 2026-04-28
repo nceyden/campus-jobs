@@ -1,1 +1,83 @@
-<h1>кабинет</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои заявки</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-light bg-light border-bottom mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">Работа в кампусе</a>
+        <a class="btn btn-outline-secondary" href="/cabinet">Мои заявки</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1 class="mb-4">Мои заявки</h1>
+
+    <div id="applications-list">
+        <p class="text-muted">загрузка...</p>
+    </div>
+</div>
+
+<script>
+    // мапа статусов в человеческие подписи и цвета bootstrap
+    const statusInfo = {
+        'new':       {label: 'новая',         badge: 'bg-secondary'},
+        'reviewing': {label: 'на рассмотрении', badge: 'bg-info'},
+        'accepted':  {label: 'принята',        badge: 'bg-success'},
+        'rejected':  {label: 'отклонена',      badge: 'bg-danger'},
+    };
+
+    async function loadApplications() {
+        const response = await fetch('/me/applications');
+        const applications = await response.json();
+        renderApplications(applications);
+    }
+
+    function renderApplications(applications) {
+        const list = document.getElementById('applications-list');
+
+        if (applications.length === 0) {
+            list.innerHTML = `
+                <div class="text-center py-5">
+                    <p class="text-muted mb-3">пока нет заявок</p>
+                    <a href="/" class="btn btn-primary">посмотреть вакансии</a>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = applications.map(a => {
+            const info = statusInfo[a.status] || {label: a.status, badge: 'bg-secondary'};
+            const date = formatDate(a.created_at);
+            return `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">${a.vacancy_title || 'вакансия удалена'}</h5>
+                            <span class="badge ${info.badge}">${info.label}</span>
+                        </div>
+                        <p class="text-muted mb-2">${a.employer_name || ''}</p>
+                        <p class="text-muted small mb-0">подана ${date}</p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function formatDate(isoString) {    // приводим к виду "28.04.2026"
+        const d = new Date(isoString);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        return `${day}.${month}.${d.getFullYear()}`;
+    }
+
+    loadApplications();
+</script>
+
+</body>
+</html>

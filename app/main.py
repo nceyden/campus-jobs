@@ -32,7 +32,19 @@ def get_db():
 
 @app.get("/vacancies", response_model=list[schemas.VacancyOut])
 def get_vacancies(db: Session = Depends(get_db)):
-    return db.query(models.Vacancy).all()
+    vacancies = db.query(models.Vacancy).all()
+    # подкидываем имя работодателя в каждую вакансию
+    for v in vacancies:
+        v.employer_name = v.employer.name if v.employer else None
+    return vacancies
+
+@app.get("/vacancies/{vacancy_id}", response_model=schemas.VacancyOut)
+def get_vacancy(vacancy_id: int, db: Session = Depends(get_db)):
+    vacancy = db.query(models.Vacancy).filter(models.Vacancy.id == vacancy_id).first()
+    if not vacancy:
+        raise HTTPException(status_code=404, detail="вакансия не найдена")
+    vacancy.employer_name = vacancy.employer.name if vacancy.employer else None
+    return vacancy
 
 
 CURRENT_USER_ID = 1 # хардкодим текущего юзера, без авторизации
