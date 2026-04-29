@@ -27,5 +27,7 @@ class ApplicationOut(BaseModel):
     cover_letter: str | None = None
     status: str
     created_at: datetime
+    vacancy_title: str | None = None
+    employer_name: str | None = None
 
     model_config = {"from_attributes": True}

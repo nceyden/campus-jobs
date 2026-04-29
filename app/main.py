@@ -68,9 +68,16 @@ def create_application(data: schemas.ApplicationCreate, db: Session = Depends(ge
 
 @app.get("/me/applications", response_model=list[schemas.ApplicationOut])
 def get_my_applications(db: Session = Depends(get_db)):
-    return db.query(models.Application).filter(
+    applications = db.query(models.Application).filter(
         models.Application.user_id == CURRENT_USER_ID
     ).all()
+    for a in applications:     # тянем вакансию и работодателя явно по id, чтобы не ловить None через relationship
+        vacancy = db.query(models.Vacancy).filter(models.Vacancy.id == a.vacancy_id).first()
+        if vacancy:
+            a.vacancy_title = vacancy.title
+            employer = db.query(models.Employer).filter(models.Employer.id == vacancy.employer_id).first()
+            a.employer_name = employer.name if employer else None
+    return applications
 
 
 # отдаем фронт, mount должен идти после всех api роутов чтобы они не перехватывались
